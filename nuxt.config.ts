@@ -1,4 +1,4 @@
-﻿// https://nuxt.com/docs/api/configuration/nuxt-config
+// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -30,7 +30,13 @@ export default defineNuxtConfig({
     quality: 80,
     format: ['webp'],
   },
+  sitemap: {
+    sources: ['/api/sitemap'],
+  },
   content: {
-    // 未来多语言扩展：content/zh/blog、content/en/blog
+    // 使用 Node.js 内置 sqlite，避免安装 better-sqlite3
+    experimental: {
+      sqliteConnector: 'native',
+    },
   },
 })

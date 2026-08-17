@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Nuxt 4 SEO 实践指南"
 description: "从 useHead 到 sitemap，一步步让 Nuxt 4 博客对搜索引擎更友好。"
 date: "2026-08-17"
