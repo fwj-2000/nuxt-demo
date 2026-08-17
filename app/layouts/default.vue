@@ -4,6 +4,7 @@
       <nav>
         <NuxtLink to="/">首页</NuxtLink>
         <NuxtLink to="/user">用户</NuxtLink>
+        <NuxtLink to="/admin">admin</NuxtLink>
       </nav>
     </header>
 
