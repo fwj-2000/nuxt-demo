@@ -33,6 +33,11 @@ export default defineNuxtConfig({
   sitemap: {
     sources: ['/api/sitemap'],
   },
+  nitro: {
+    output: {
+      publicDir: 'dist',
+    },
+  },
   content: {
     // 使用 Node.js 内置 sqlite，避免安装 better-sqlite3
     experimental: {

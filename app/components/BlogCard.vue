@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import type { ParsedContent } from '@nuxt/content'
 
 interface Props {
@@ -10,7 +10,7 @@ defineProps<Props>()
 
 <template>
   <article class="group border-b border-[var(--border)] py-8 last:border-b-0">
-    <NuxtLink :to="`/blog/${article._path?.split('/').pop()}`" class="block">
+    <NuxtLink :to="article.path" class="block">
       <div class="flex flex-col sm:flex-row gap-6">
         <div v-if="article.cover" class="sm:w-40 shrink-0">
           <NuxtImg
