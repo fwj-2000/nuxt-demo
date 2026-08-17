@@ -1,39 +1,9 @@
-<template>
-  <div class="my-blog-layout">
-    <header>
-      <nav>
-        <NuxtLink to="/">首页</NuxtLink>
-        <NuxtLink to="/user">用户</NuxtLink>
-        <NuxtLink to="/admin">admin</NuxtLink>
-      </nav>
-    </header>
-
-    <main>
+﻿<template>
+  <div class="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--fg)] transition-colors duration-300">
+    <AppHeader />
+    <main class="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <slot />
     </main>
-
-    <footer>
-      <p>© 2026 nuxt4 - 开启 SSR 之旅</p>
-    </footer>
+    <AppFooter />
   </div>
 </template>
-
-<style scoped>
-.my-blog-layout{
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  nav{
-    a{
-      margin-right: 20px;
-    }
-  }
-}
-/* 这里写全局通用的样式 */
-header { border-bottom: 1px solid #eee; padding: 1rem; }
-main{
-  flex: 1;
-  border: #1a1a1a 1px solid;
-}
-footer {  text-align: center; color: #888; }
-</style>
