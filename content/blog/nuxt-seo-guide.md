@@ -8,6 +8,13 @@ author: "你的名字"
 draft: false
 ---
 
+<!--
+  这是一篇 Markdown 博客文章。
+  上方 --- 之间是 Front Matter（文章元数据），@nuxt/content 会读取这些字段。
+  字段含义参考 content.config.ts 中的 schema 定义。
+  注意：文件必须保存为无 BOM 的 UTF-8，否则 Front Matter 可能解析失败。
+-->
+
 # Nuxt 4 SEO 实践指南
 
 对于一个内容型站点来说，SEO 不是可选项。Nuxt 4 提供了一整套工具，让我们可以比较优雅地处理这件事。

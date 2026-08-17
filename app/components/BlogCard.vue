@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ParsedContent } from '@nuxt/content'
 
+// Props: 接收一篇文章的数据对象，由 @nuxt/content 解析 Markdown 后生成
 interface Props {
   article: ParsedContent
 }
@@ -10,8 +11,14 @@ defineProps<Props>()
 
 <template>
   <article class="group border-b border-[var(--border)] py-8 last:border-b-0">
+    <!-- 
+      article.path 是 @nuxt/content 自动生成的路由路径。
+      例如 content/blog/nuxt-seo-guide.md 对应 path: '/blog/nuxt-seo-guide'
+      所以点击卡片就能跳转到正确的文章详情页。
+    -->
     <NuxtLink :to="article.path" class="block">
       <div class="flex flex-col sm:flex-row gap-6">
+        <!-- 如果文章有 cover，就显示封面图 -->
         <div v-if="article.cover" class="sm:w-40 shrink-0">
           <NuxtImg
             :src="article.cover"

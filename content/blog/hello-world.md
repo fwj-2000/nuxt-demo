@@ -8,6 +8,13 @@ author: "你的名字"
 draft: false
 ---
 
+<!--
+  这是一篇 Markdown 博客文章。
+  上方 --- 之间是 Front Matter（文章元数据），@nuxt/content 会读取这些字段。
+  字段含义参考 content.config.ts 中的 schema 定义。
+  注意：文件必须保存为无 BOM 的 UTF-8，否则 Front Matter 可能解析失败。
+-->
+
 # 你好，Nuxt 4 博客
 
 这是我用 Nuxt 4 搭建的新博客。选择 Nuxt 而不是纯 Vue SPA，最主要的原因是 **SEO 和首屏性能**。
