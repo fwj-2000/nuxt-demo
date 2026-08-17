@@ -1,2 +1,4 @@
-User-Agent: *
-Disallow:
+﻿User-agent: *
+Allow: /
+
+Sitemap: https://你的域名.vercel.app/sitemap.xml
