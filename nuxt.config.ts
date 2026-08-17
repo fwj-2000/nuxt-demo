@@ -21,19 +21,19 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   // 全局默认 <head> 配置：
-  // titleTemplate 会让每个页面的 title 变成“页面标题 - 你的博客名”
+  // titleTemplate 会让每个页面的 title 变成“页面标题 - WenJun Blogs”
   app: {
     head: {
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1.0',
-      titleTemplate: '%s - 你的博客名',
+      titleTemplate: '%s - WenJun Blogs',
     },
   },
 
   // 站点信息：sitemap 等模块会读取这里的 url 和 name
   site: {
-    url: 'https://你的域名.vercel.app',
-    name: '你的博客名',
+    url: 'https://nuxt-demo.vercel.app',
+    name: 'WenJun Blogs',
   },
 
   // color-mode 配置：

@@ -4,7 +4,7 @@ description: "这是我的第一篇博客文章，记录使用 Nuxt 4 搭建博�
 date: "2026-08-15"
 tags: ["Nuxt", "生活"]
 cover: "/images/covers/hello-world.svg"
-author: "你的名字"
+author: "WenJun"
 draft: false
 ---
 

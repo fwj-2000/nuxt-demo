@@ -6,9 +6,9 @@ useHead({
 })
 
 useSeoMeta({
-  title: '你的博客名',
+  title: 'NuxtSSR',
   description: '一个使用 Nuxt 4 构建的技术博客，记录前端学习与工程实践。',
-  ogTitle: '你的博客名',
+  ogTitle: 'NuxtSSR',
   ogDescription: '一个使用 Nuxt 4 构建的技术博客，记录前端学习与工程实践。',
   ogType: 'website',
 })
