@@ -379,3 +379,298 @@ nitro: {
 - **谨慎 disallow `/api`**：如果站点依赖 API 接口生成 sitemap 或其他关键内容，禁止 `/api` 可能导致搜索引擎无法正确索引。
 - **谨慎使用 Crawl-delay**：Googlebot 不支持该参数，且过度限制可能影响收录效率。
 - **测试改动**：修改 robots.txt 后，可以用 Google Search Console 重新提交并验证。
+
+## 4. sitemap.xml
+
+`sitemap.xml` 是一个文件，用来列出网站中希望搜索引擎抓取和索引的页面 URL。它不会强制爬虫抓取这些 URL，但能**显著提高页面被发现和收录的效率**，尤其是以下场景：
+
+- 网站有大量页面，内部链接不够完善。
+- 某些页面没有从首页或其他重要页面链接过来（孤岛页面）。
+- 内容经常更新，需要告诉搜索引擎最新状态。
+- 网站使用 JavaScript 动态生成导航，爬虫可能无法通过链接完整发现页面。
+
+根据 [Google 搜索中心文档](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)，提交 sitemap 只是给搜索引擎一个"提示"，不保证一定会被使用。
+
+### sitemap 的格式
+
+Google 支持多种 sitemap 格式，[没有偏好某一种](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)。企业级项目中常见的有：
+
+| 格式 | 说明 | 适用场景 |
+| --- | --- | --- |
+| **XML** | 最灵活，支持 `lastmod`、`changefreq`、`priority`，以及图片、视频、新闻等扩展 | 绝大多数企业级项目 |
+| **RSS / Atom** | 天然带更新时间和内容列表 | 已有 RSS 订阅的站点 |
+| **纯文本** | 每行一个 URL | 最简单，但功能最少 |
+
+一个典型的 XML sitemap 长这样：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://xiaofu-blog.vercel.app/</loc>
+    <lastmod>2026-08-18</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://xiaofu-blog.vercel.app/blog/nuxt-seo-guide</loc>
+    <lastmod>2026-08-18</lastmod>
+    <priority>0.8</priority>
+  </url>
+</urlset>
+```
+
+常用字段：
+
+| 字段 | 是否必填 | 说明 |
+| --- | --- | --- |
+| `loc` | 是 | 页面完整 URL |
+| `lastmod` | 否 | 页面最后修改时间 |
+| `changefreq` | 否 | 更新频率，如 `daily`、`weekly`、`monthly` |
+| `priority` | 否 | 相对优先级，范围 0.0 ~ 1.0，默认 0.5 |
+
+### sitemap 索引文件
+
+当 URL 数量超过 [50,000 个或文件大小超过 50MB（未压缩）](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap) 时，必须拆分成多个 sitemap，并用 `sitemap index` 文件管理：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://example.com/sitemap-pages.xml</loc>
+    <lastmod>2024-08-15</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://example.com/sitemap-posts.xml</loc>
+    <lastmod>2022-06-05</lastmod>
+  </sitemap>
+</sitemapindex>
+```
+
+企业级大型站点通常会按内容类型拆分：
+
+- `sitemap-pages.xml`：首页、关于页等静态页面
+- `sitemap-posts.xml`：博客文章
+- `sitemap-products.xml`：商品详情页
+- `sitemap-categories.xml`：分类/标签页
+
+### Nuxt 4 实战
+
+Nuxt 4 中生成 `sitemap.xml` 的主流做法是使用官方模块 `@nuxtjs/sitemap`。对于由 `@nuxt/content` 动态生成的文章页，再通过一个 `server/api/sitemap.ts` 数据源把 URL 注入进去。
+
+#### 1. 安装模块
+
+```bash
+pnpm add @nuxtjs/sitemap
+```
+
+#### 2. 注册并配置模块
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: [
+    // ...其他模块
+    '@nuxtjs/sitemap',
+  ],
+
+  // 站点信息：sitemap 会读取这里的 url 生成完整链接
+  site: {
+    url: 'https://xiaofu-blog.vercel.app',
+    name: 'xiaofu-xf',
+  },
+
+  // sitemap 配置：使用 /api/sitemap 作为额外 URL 来源
+  sitemap: {
+    sources: ['/api/sitemap'],
+  },
+})
+```
+
+配置说明：
+
+- `site.url` 是 sitemap 里所有 URL 的域名前缀，必须带协议（`https://`）。
+- `@nuxtjs/sitemap` 默认会自动发现 `pages/` 目录下的静态路由，比如 `/`、`/blog`，并自动加入 sitemap。
+- `sources: ['/api/sitemap']` 告诉模块：额外去 `/api/sitemap` 接口读取动态页面 URL。
+
+#### 3. 为什么需要 `server/api/sitemap.ts`
+
+`@nuxt/content` 的文章页（如 `/blog/nuxt-seo-guide`）不是 `pages/` 目录下的硬编码路由，而是在运行时根据 `content/blog/*.md` 动态生成的。`@nuxtjs/sitemap` 在构建时无法自动知道这些动态路由，因此需要我们自己提供一个数据源。
+
+#### 4. 创建 sitemap 数据源
+
+文件：[server/api/sitemap.ts](server/api/sitemap.ts)
+
+推荐使用模块提供的 `defineSitemapEventHandler`：
+
+```ts
+import { queryCollection } from '@nuxt/content/server'
+
+export default defineSitemapEventHandler(async () => {
+  // 查询 blog 集合的所有文章
+  const posts = await queryCollection('blog').all()
+
+  // 返回 sitemap 标准格式
+  return posts.map(post => ({
+    loc: post.path,      // 页面 URL，例如 /blog/nuxt-seo-guide
+    lastmod: post.date,  // 最后修改时间，这里用发布日期
+  }))
+})
+```
+
+代码解读：
+
+- `defineSitemapEventHandler` 是 `@nuxtjs/sitemap` 提供的专用 helper，比普通 `defineEventHandler` 更语义化。
+- `queryCollection('blog').all()`：读取 `content/blog/` 下所有 Markdown 文件的元数据。
+- `loc: post.path`：文章的访问路径，模块会自动拼接成完整 URL。
+- `lastmod: post.date`：文章发布日期，用于告诉搜索引擎内容新鲜度。
+
+#### 5. 企业级进阶：多 sitemap 配置
+
+当站点变大后，可以用 `@nuxtjs/sitemap` 的 `sitemaps` 配置拆分成多个子 sitemap。例如把页面和文章分开：
+
+```ts
+// nuxt.config.ts
+sitemap: {
+  sitemaps: {
+    pages: {
+      // pages/ 目录下的静态路由会自动进入这个 sitemap
+      include: ['/**'],
+      exclude: ['/blog/**'],
+    },
+    posts: {
+      // 动态文章 URL 从 /api/sitemap 读取
+      sources: ['/api/sitemap'],
+    },
+  },
+}
+```
+
+构建后会生成 `sitemap-pages.xml` 和 `sitemap-posts.xml`，并通过 `sitemap.xml`（sitemap index）统一管理。
+
+#### 6. 构建与验证
+
+安装并配置完成后，运行：
+
+```bash
+pnpm generate
+```
+
+构建完成后检查 `.output/public/sitemap.xml`，应该能看到：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://xiaofu-blog.vercel.app/</loc>
+  </url>
+  <url>
+    <loc>https://xiaofu-blog.vercel.app/blog</loc>
+  </url>
+  <url>
+    <loc>https://xiaofu-blog.vercel.app/blog/nuxt-seo-guide</loc>
+    <lastmod>2026-08-18</lastmod>
+  </url>
+  <url>
+    <loc>https://xiaofu-blog.vercel.app/blog/hello-world</loc>
+    <lastmod>2026-08-17</lastmod>
+  </url>
+</urlset>
+```
+
+本地开发时也可以直接访问 `http://localhost:3000/sitemap.xml` 预览。
+
+### 提交 sitemap 的方式
+
+生成 sitemap 后，需要告诉搜索引擎它在哪里。常见方式有三种：
+
+| 方式 | 说明 |
+| --- | --- |
+| **Google Search Console** | 手动提交 `https://your-domain.com/sitemap.xml`，最常用 |
+| **Search Console API** | 程序化提交，适合有大量站点或需要自动化运维的企业 |
+| **robots.txt 引用** | 在 `robots.txt` 里加 `Sitemap: https://your-domain.com/sitemap.xml`，搜索引擎抓取时会自动发现 |
+
+推荐使用 **Search Console + robots.txt 引用** 双保险。
+
+### 其他可行方案
+
+和 `robots.txt` 一样，`sitemap.xml` 在 Nuxt 中也有多种实现方式。
+
+#### 方案一：`public/sitemap.xml` 静态文件
+
+直接把写好的 `sitemap.xml` 放到 `public/` 目录下。构建后它会原样输出到站点根目录。
+
+```xml
+<!-- public/sitemap.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://xiaofu-blog.vercel.app/</loc>
+  </url>
+  <url>
+    <loc>https://xiaofu-blog.vercel.app/blog</loc>
+  </url>
+</urlset>
+```
+
+**适用场景**：页面极少且基本不变的小型站点。
+
+**缺点**：页面增多或文章频繁发布时，手动维护成本高，容易遗漏。
+
+#### 方案二：`server/routes/sitemap.xml.get.ts` Nitro 路由
+
+通过 Nitro 服务端路由手写 XML，适合需要完全自定义格式或数据源的场景。
+
+```ts
+// server/routes/sitemap.xml.get.ts
+import { queryCollection } from '@nuxt/content/server'
+
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig(event)
+  const posts = await queryCollection(event, 'blog').all()
+
+  const urls = posts.map(post => `
+    <url>
+      <loc>${config.public.siteUrl}${post.path}</loc>
+      <lastmod>${post.date}</lastmod>
+    </url>
+  `).join('')
+
+  setResponseHeader(event, 'Content-Type', 'application/xml')
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${urls}
+</urlset>`
+})
+```
+
+如果用于 SSG，还需要在 `nuxt.config.ts` 里加入预渲染：
+
+```ts
+nitro: {
+  prerender: {
+    routes: ['/sitemap.xml'],
+  },
+}
+```
+
+**适用场景**：需要完全自定义 sitemap 结构，或数据来源不是 `@nuxt/content`。
+
+**缺点**：需要手动拼接 XML，容易出错；没有自动路由发现、格式校验、lastmod 推断等便利功能。
+
+#### 三种方案对比
+
+| 方案 | 配置位置 | 复杂度 | 适合场景 |
+| --- | --- | --- | --- |
+| `public/sitemap.xml` | 静态文件 | 低 | 页面极少、不更新 |
+| Nitro 服务端路由 | `server/routes/sitemap.xml.get.ts` | 中 | 需要完全自定义格式或数据源 |
+| `@nuxtjs/sitemap` 模块 | `nuxt.config.ts` + `server/api/sitemap.ts` | 低（功能多） | 企业级项目、动态内容、需要自动维护和多 sitemap 拆分 |
+
+### 注意事项
+
+- **sitemap 不会替代内部链接**：清晰的站内链接仍然是 SEO 的基础。
+- **只放规范 URL**：不要同时放 `http` 和 `https`、带 `www` 和不带 `www` 的重复 URL。
+- **保持 `lastmod` 更新**：文章发布或修改后，`lastmod` 应该随之更新，帮助搜索引擎判断内容新鲜度。
+- **文件大小和数量限制**：单个 sitemap 最多 50,000 个 URL 或 50MB，超过必须拆分成 `sitemap index`。
+- **不要只依赖 sitemap**：对于不重要或私密的页面，应该使用 `robots.txt` 或 `noindex` 控制。
+- **提交后检查状态**：在 Google Search Console 提交 sitemap 后，要关注"已发现 URL 数"和"已索引 URL 数"，排查异常。

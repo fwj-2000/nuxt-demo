@@ -3,7 +3,7 @@
 // 这样搜索引擎就能发现所有动态生成的文章页面。
 import { queryCollection } from '@nuxt/content/server'
 
-export default defineEventHandler(async (event) => {
+export default defineSitemapEventHandler(async (event) => {
   // 在服务端查询 blog 集合的所有文章
   const posts = await queryCollection(event, 'blog').all()
 
