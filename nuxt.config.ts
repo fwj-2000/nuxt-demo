@@ -17,12 +17,14 @@ export default defineNuxtConfig({
   // - @nuxt/image: 图片优化
   // - @nuxtjs/color-mode: 暗黑/白天模式
   // - @nuxtjs/sitemap: 自动生成 sitemap.xml
+  // - @nuxtjs/robots: 自动生成 robots.txt
   // - @unocss/nuxt: 原子化 CSS
   modules: [
     '@nuxt/content',
     '@nuxt/image',
     '@nuxtjs/color-mode',
     '@nuxtjs/sitemap',
+    '@nuxtjs/robots',
     '@unocss/nuxt',
   ],
 
@@ -66,11 +68,25 @@ export default defineNuxtConfig({
     sources: ['/api/sitemap'],
   },
 
-  // 预渲染动态路由：robots.txt 由 server/routes/robots.txt.get.ts 动态生成
-  // 必须显式加入预渲染列表，否则 SSG 不会输出该文件
+  // robots.txt 配置：由 @nuxtjs/robots 模块自动生成
+  // 规则与 Next.js 的 robots.ts 类似，支持多组 User-agent
+  robots: {
+    groups: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin'],
+      },
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+      },
+    ],
+  },
+
+  // 预渲染动态路由：/about 页面被中间件拦截，跳过预渲染
   nitro: {
     prerender: {
-      routes: ['/robots.txt'],
       ignore: ['/about'],
     },
   },

@@ -13,6 +13,7 @@
     "@nuxt/content": "^3.15.2",
     "@nuxt/image": "^2.1.0",
     "@nuxtjs/color-mode": "^4.0.1",
+    "@nuxtjs/robots": "^6.1.4",
     "@nuxtjs/sitemap": "^8.3.4",
     "nuxt": "^4.5.2",
     "vue": "^3.5.41",

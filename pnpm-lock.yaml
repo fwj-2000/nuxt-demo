@@ -17,6 +17,9 @@ importers:
       '@nuxtjs/color-mode':
         specifier: ^4.0.1
         version: 4.0.1(magic-string@1.2.0)(magicast@0.5.4)(oxc-parser@0.139.0)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.26)))
+      '@nuxtjs/robots':
+        specifier: ^6.1.4
+        version: 6.1.4(9197ddf7fd6595d34da1f40fb0fd2ded)
       '@nuxtjs/sitemap':
         specifier: ^8.3.4
         version: 8.3.4(9197ddf7fd6595d34da1f40fb0fd2ded)
@@ -399,6 +402,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fingerprintjs/botd@2.0.0':
+    resolution: {integrity: sha512-yhuz23NKEcBDTHmGz/ULrXlGnbHenO+xZmVwuBkuqHUkqvaZ5TAA0kAgcRy4Wyo5dIBdkIf57UXX8/c9UlMLJg==}
 
   '@iconify-json/ph@1.2.2':
     resolution: {integrity: sha512-PgkEZNtqa8hBGjHXQa4pMwZa93hmfu8FUSjs/nv4oUU6yLsgv+gh9nu28Kqi8Fz9CCVu4hj1MZs9/60J57IzFw==}
@@ -783,6 +789,14 @@ packages:
 
   '@nuxtjs/mdc@0.22.2':
     resolution: {integrity: sha512-bGI/tXOB7iOMY5LBmSICTVE1l2MsNdLnbZDc+zbaeVv6EXz8V7oyJgi+Fe32qWTS+k5cNjAzj90gvlQfJ/RW9g==}
+
+  '@nuxtjs/robots@6.1.4':
+    resolution: {integrity: sha512-EQmcyegctRSrKfLnl5YHzIYEt6h3jSWj8jtzlfcr79WrZOv/i5eLcZm/ewhelmJVkkm5BB/UPcam52JK4i7u1w==}
+    peerDependencies:
+      zod: '>=3'
+    peerDependenciesMeta:
+      zod:
+        optional: true
 
   '@nuxtjs/sitemap@8.3.4':
     resolution: {integrity: sha512-7WHLwtDlBGnriqb33crzt92fghz5o1vvumPYK0J7vutClduG6yzhx5CM22S/lcrwl7xliyvIYjrZ/2OvgqqJjA==}
@@ -5210,6 +5224,8 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
+  '@fingerprintjs/botd@2.0.0': {}
+
   '@iconify-json/ph@1.2.2':
     dependencies:
       '@iconify/types': 2.0.0
@@ -5964,6 +5980,31 @@ snapshots:
       - rolldown
       - supports-color
       - unplugin
+
+  '@nuxtjs/robots@6.1.4(9197ddf7fd6595d34da1f40fb0fd2ded)':
+    dependencies:
+      '@fingerprintjs/botd': 2.0.0
+      '@nuxt/kit': 4.5.2(magic-string@1.2.0)(magicast@0.5.4)(oxc-parser@0.139.0)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.26)))
+      consola: 3.4.2
+      defu: 6.1.7
+      h3: 1.15.11
+      nuxt-site-config: 4.2.3(9197ddf7fd6595d34da1f40fb0fd2ded)
+      nuxtseo-shared: 5.3.12(e85e36b0386b0199d7463257417fbd52)
+      pathe: 2.0.3
+      pkg-types: 2.3.1
+      ufo: 1.6.4
+    optionalDependencies:
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@nuxt/schema'
+      - magic-string
+      - magicast
+      - nuxt
+      - oxc-parser
+      - rolldown
+      - unplugin
+      - vite
+      - vue
 
   '@nuxtjs/sitemap@8.3.4(9197ddf7fd6595d34da1f40fb0fd2ded)':
     dependencies:

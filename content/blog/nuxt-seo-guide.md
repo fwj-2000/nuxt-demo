@@ -23,11 +23,11 @@ SEO（Search Engine Optimization，搜索引擎优化）是让网站在搜索引
 
 ### SEO 的核心三大块
 
-| 类别 | 关注点 | 例子 |
-| --- | --- | --- |
+| 类别     | 关注点                         | 例子                                    |
+| -------- | ------------------------------ | --------------------------------------- |
 | 技术 SEO | 网站能否被抓取、索引和快速渲染 | robots.txt、sitemap、页面速度、移动适配 |
-| 内容 SEO | 页面内容是否满足搜索意图 | 标题、正文、关键词覆盖、内容结构 |
-| 站外 SEO | 外部信号，主要是链接 | 其他网站指向你的反向链接、社交媒体曝光 |
+| 内容 SEO | 页面内容是否满足搜索意图       | 标题、正文、关键词覆盖、内容结构        |
+| 站外 SEO | 外部信号，主要是链接           | 其他网站指向你的反向链接、社交媒体曝光  |
 
 ### 白帽、灰帽与黑帽
 
@@ -82,7 +82,7 @@ Googlebot 主要通过以下方式发现页面：
 因此，**被抓取 ≠ 被索引**。即使 Googlebot 访问了你的页面，如果页面质量不达标，或明确声明了 `noindex`，它也不会进入索引库：
 
 ```html
-<meta name="robots" content="noindex">
+<meta name="robots" content="noindex" />
 ```
 
 #### 索引信号
@@ -114,10 +114,10 @@ Google 官方承诺：不会通过付费来提高网页排名。排名是程序�
 
 当用户搜索时，Google 主要考量三类因素：
 
-| 因素 | 含义 |
-| --- | --- |
-| **相关性** | 页面内容与搜索意图的匹配程度 |
-| **权威性** | 域名权重、反向链接质量和数量 |
+| 因素         | 含义                             |
+| ------------ | -------------------------------- |
+| **相关性**   | 页面内容与搜索意图的匹配程度     |
+| **权威性**   | 域名权重、反向链接质量和数量     |
 | **用户体验** | 加载速度、移动端适配、交互稳定性 |
 
 另外需要注意：
@@ -137,3 +137,245 @@ Nuxt 默认支持 SSR（服务端渲染），Googlebot 抓取时能看到完整 
 - 用正确的 `<head>` 元信息提升相关性和点击率。
 - 用 JSON-LD 和 Open Graph 增强内容理解。
 - 用 Web Vitals 指标保障用户体验。
+
+## 3. robots.txt
+
+`robots.txt` 是搜索引擎爬虫访问网站时遵循的规则文件，通常放在网站根目录下。它告诉爬虫哪些页面可以抓取，哪些页面不应该抓取。
+
+需要明确一点：**robots.txt 不是安全机制**。即使禁止了某个路径，恶意爬虫或直接访问仍然可以获取内容。它的真正作用是**引导善意的搜索引擎爬虫，避免它们把抓取预算浪费在不重要的页面上**。
+
+### 常用指令
+
+| 指令          | 含义                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `User-agent`  | 指定对哪些爬虫生效。`*` 表示所有爬虫，也可以写具体爬虫名如 `Googlebot`、`Baiduspider` |
+| `Allow`       | 允许抓取的路径                                                                        |
+| `Disallow`    | 禁止抓取的路径                                                                        |
+| `Crawl-delay` | 爬虫访问间隔（秒）。**Googlebot 不支持该参数**，部分其他爬虫支持                      |
+| `Sitemap`     | 站点地图的完整 URL                                                                    |
+| `Host`        | 网站首选域名（部分搜索引擎支持）                                                      |
+
+常见爬虫名称：
+
+- `Googlebot`：Google
+- `Baiduspider`：百度
+- `Bingbot`：必应
+- `YandexBot`：Yandex
+- `Sogou web spider` / `Sogou inst spider`：搜狗
+- `360Spider`：360
+- `Bytespider`：字节跳动
+- `PetalBot`：华为花瓣
+
+### 规则优先级
+
+同一份 `robots.txt` 里，如果既有 `User-agent: *`，又有具名爬虫（如 `User-agent: Googlebot`），那么对某只爬虫而言，会**优先采用与其名称匹配的那一组规则**；没有单独声明时，再回退到 `*` 通配规则。
+
+### 示例：掘金
+
+> [掘金链接](https://juejin.cn/robots.txt)
+
+```txt
+User-agent: *
+Disallow: /subscribe/subscribed
+Sitemap: https://juejin.cn/sitemap/posts/index.xml
+```
+
+掘金对所有爬虫允许整站抓取，但禁止访问 `/subscribe/subscribed`，同时通过 Sitemap 告诉爬虫站点地图位置。
+
+### 示例：哔哩哔哩
+
+哔哩哔哩的规则更复杂，为不同爬虫设置了不同权限：
+
+> [B站链接](https://www.bilibili.com/robots.txt)
+
+```txt
+User-agent: *
+Disallow: /medialist/detail/
+Disallow: /index.html
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: bingbot
+Allow: /
+
+User-agent: *
+Disallow: /
+```
+
+解读：
+
+- 第一段 `User-agent: *` 禁止所有爬虫抓 `/medialist/detail/` 和 `/index.html`。
+- 中间为 Google、百度、必应等主流爬虫单独声明 `Allow: /`，允许抓全站。
+- 最后一段 `User-agent: * Disallow: /` 作为兜底：未单独列名的爬虫禁止抓全站。
+
+### Nuxt 4 实战
+
+在 Nuxt 4 中，企业级项目通常不会手写 `server/routes/robots.txt.get.ts`，而是使用官方模块 `@nuxtjs/robots`。它和 Next.js 的 `robots.ts` 思路一致：在 `nuxt.config.ts` 里声明式配置，构建时自动生成 `robots.txt`。
+
+#### 1. 安装模块
+
+```bash
+pnpm add @nuxtjs/robots
+```
+
+#### 2. 在 nuxt.config.ts 中注册并配置
+
+```ts
+// https://nuxt.com/docs/api/configuration/nuxt-config
+export default defineNuxtConfig({
+  // ...其他配置
+
+  modules: [
+    '@nuxt/content',
+    '@nuxt/image',
+    '@nuxtjs/color-mode',
+    '@nuxtjs/sitemap',
+    '@nuxtjs/robots', // 自动生成 robots.txt
+    '@unocss/nuxt',
+  ],
+
+  // 站点信息：robots 和 sitemap 都会读取这里的 url
+  site: {
+    url: 'https://xiaofu-blog.vercel.app',
+    name: 'xiaofu-xf',
+  },
+
+  // robots.txt 配置：支持多组 User-agent 规则
+  robots: {
+    groups: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin'],
+      },
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+      },
+    ],
+  },
+})
+```
+
+配置要点：
+
+- `site.url` 会被 `@nuxtjs/robots` 自动读取，用于生成 `Sitemap` 指令，不需要手动拼接。
+- `groups` 数组支持多组规则，每组可以指定不同的 `userAgent`、`allow`、`disallow`、`crawlDelay`。
+- 规则优先级与标准 `robots.txt` 一致：具名爬虫优先于 `*` 通配规则。
+
+#### 3. 移除旧实现
+
+如果之前用 Nitro 路由手写 `robots.txt`，现在可以删除：
+
+- 删除 `server/routes/robots.txt.get.ts`
+- 从 `nitro.prerender.routes` 中移除 `/robots.txt`（模块会自动处理）
+
+#### 4. 验证
+
+本地开发时直接访问 `http://localhost:3000/robots.txt`，你可能会看到：
+
+```txt
+# START nuxt-robots (indexing disabled)
+User-agent: *
+Disallow: /
+
+# DEVELOPMENT HINTS:
+# - Indexing is blocked in development. You can mock a production environment with ?mockProductionEnv query.
+# END nuxt-robots
+```
+
+**不要担心，这是 `@nuxtjs/robots` 模块的开发环境保护机制**，防止搜索引擎误收录 localhost。要查看生产环境的真实输出，加上 `?mockProductionEnv` 参数：
+
+```
+http://localhost:3000/robots.txt?mockProductionEnv
+```
+
+此时应该能看到：
+
+```txt
+User-agent: *
+Allow: /
+Disallow: /admin
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://xiaofu-blog.vercel.app/sitemap.xml
+```
+
+部署后，用 Google Search Console 的 robots.txt 测试工具，或浏览器直接访问 `https://your-domain.com/robots.txt` 检查是否生效。
+
+### 其他可行方案
+
+除了 `@nuxtjs/robots` 模块，Nuxt 4 中还有两种常用做法，根据项目需求选择即可。
+
+#### 方案一：`public/robots.txt` 静态文件
+
+直接把 `robots.txt` 放到项目的 `public/` 目录下。构建后它会原样输出到站点根目录。
+
+```txt
+// public/robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin
+
+Sitemap: https://xiaofu-blog.vercel.app/sitemap.xml
+```
+
+**适用场景**：规则简单、不随环境变化、不想引入额外依赖。
+
+**缺点**：站点域名或 sitemap 地址变化时，需要手动修改文件内容。
+
+#### 方案二：`server/routes/robots.txt.get.ts` Nitro 路由
+
+通过 Nitro 服务端路由动态生成，适合需要从 `runtimeConfig` 读取站点地址的场景。
+
+```ts
+// server/routes/robots.txt.get.ts
+export default defineEventHandler((event) => {
+  const config = useRuntimeConfig(event)
+
+  setResponseHeader(event, 'Content-Type', 'text/plain')
+
+  return `User-agent: *
+Allow: /
+Disallow: /admin
+
+Sitemap: ${config.public.siteUrl}/sitemap.xml
+`
+})
+```
+
+如果用于 SSG，还需要在 `nuxt.config.ts` 里加入预渲染：
+
+```ts
+nitro: {
+  prerender: {
+    routes: ['/robots.txt'],
+  },
+}
+```
+
+**适用场景**：规则不复杂，但希望从配置中心动态生成内容，避免硬编码域名。
+
+**缺点**：规则复杂时需要手写字符串拼接，可维护性不如 `@nuxtjs/robots` 模块。
+
+#### 三种方案对比
+
+| 方案 | 配置位置 | 复杂度 | 适合场景 |
+| --- | --- | --- | --- |
+| `public/robots.txt` | 静态文件 | 低 | 规则简单、无动态需求 |
+| Nitro 服务端路由 | `server/routes/robots.txt.get.ts` | 中 | 需要动态读取站点配置 |
+| `@nuxtjs/robots` 模块 | `nuxt.config.ts` | 低（功能多） | 企业级项目、规则复杂、与 sitemap 集成 |
+
+### 注意事项
+
+- **不要把 robots.txt 当保密工具**：敏感内容应该通过登录验证、`noindex` 标签或 HTTP 认证来保护。
+- **不要禁止整个站点**：`Disallow: /` 会让搜索引擎不抓取任何页面。
+- **谨慎 disallow `/api`**：如果站点依赖 API 接口生成 sitemap 或其他关键内容，禁止 `/api` 可能导致搜索引擎无法正确索引。
+- **谨慎使用 Crawl-delay**：Googlebot 不支持该参数，且过度限制可能影响收录效率。
+- **测试改动**：修改 robots.txt 后，可以用 Google Search Console 重新提交并验证。
