@@ -1,4 +1,5 @@
 ﻿<script setup lang="ts">
+const config = useRuntimeConfig()
 const { data: posts } = await useBlogPosts()
 
 useHead({
@@ -6,10 +7,10 @@ useHead({
 })
 
 useSeoMeta({
-  title: 'NuxtSSR',
-  description: '一个使用 Nuxt 4 构建的技术博客，记录前端学习与工程实践。',
-  ogTitle: 'NuxtSSR',
-  ogDescription: '一个使用 Nuxt 4 构建的技术博客，记录前端学习与工程实践。',
+  title: config.public.siteName,
+  description: `${config.public.siteName} 的个人技术博客，记录前端学习与工程实践。`,
+  ogTitle: config.public.siteName,
+  ogDescription: `${config.public.siteName} 的个人技术博客，记录前端学习与工程实践。`,
   ogType: 'website',
 })
 </script>

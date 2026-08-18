@@ -17,7 +17,7 @@ export default defineContentConfig({
         date: z.string(),               // 发布日期，用于排序
         tags: z.array(z.string()).optional(), // 标签数组，可选
         cover: z.string().optional(),   // 封面图路径，可选
-        author: z.string().optional(),  // 作者，可选
+        author: z.string().optional().default('xiaofu-xf'),  // 作者，可选，默认读取站点配置
         draft: z.boolean().optional().default(false), // 是否为草稿，默认 false
       }),
     }),

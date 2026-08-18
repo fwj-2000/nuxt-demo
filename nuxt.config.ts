@@ -3,6 +3,15 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
+  // 站点核心配置：以后想换品牌名/域名，只改这里即可
+  runtimeConfig: {
+    public: {
+      siteName: 'xiaofu-xf',
+      siteUrl: 'https://xiaofu-blog.vercel.app',
+      author: 'xiaofu-xf',
+    },
+  },
+
   // 注册的 Nuxt 模块：
   // - @nuxt/content: Markdown 内容管理
   // - @nuxt/image: 图片优化
@@ -21,19 +30,18 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   // 全局默认 <head> 配置：
-  // titleTemplate 会让每个页面的 title 变成“页面标题 - WenJun Blogs”
+  // titleTemplate 在 app.vue 中根据 runtimeConfig.public.siteName 动态设置
   app: {
     head: {
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1.0',
-      titleTemplate: '%s - WenJun Blogs',
     },
   },
 
   // 站点信息：sitemap 等模块会读取这里的 url 和 name
   site: {
-    url: 'https://fwj-blog.vercel.app',
-    name: 'WenJun Blogs',
+    url: 'https://xiaofu-blog.vercel.app',
+    name: 'xiaofu-xf',
   },
 
   // color-mode 配置：
@@ -56,6 +64,14 @@ export default defineNuxtConfig({
   // 这样 sitemap 才能收录 @nuxt/content 动态生成的文章页
   sitemap: {
     sources: ['/api/sitemap'],
+  },
+
+  // 预渲染动态路由：robots.txt 由 server/routes/robots.txt.get.ts 动态生成
+  // 必须显式加入预渲染列表，否则 SSG 不会输出该文件
+  nitro: {
+    prerender: {
+      routes: ['/robots.txt'],
+    },
   },
 
   content: {

@@ -4,7 +4,6 @@ description: "从 useHead 到 sitemap，一步步让 Nuxt 4 博客对搜索引�
 date: "2026-08-17"
 tags: ["Nuxt", "SEO", "SSR"]
 cover: "/images/covers/nuxt-seo.svg"
-author: "WenJun"
 draft: false
 ---
 
