@@ -32,7 +32,7 @@ export default defineNuxtConfig({
 
   // 站点信息：sitemap 等模块会读取这里的 url 和 name
   site: {
-    url: 'https://nuxt-demo.vercel.app',
+    url: 'https://fwj-blog.vercel.app',
     name: 'WenJun Blogs',
   },
 
