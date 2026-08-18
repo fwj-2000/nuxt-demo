@@ -71,6 +71,7 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       routes: ['/robots.txt'],
+      ignore: ['/about'],
     },
   },
 
