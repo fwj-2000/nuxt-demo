@@ -674,3 +674,197 @@ nitro: {
 - **文件大小和数量限制**：单个 sitemap 最多 50,000 个 URL 或 50MB，超过必须拆分成 `sitemap index`。
 - **不要只依赖 sitemap**：对于不重要或私密的页面，应该使用 `robots.txt` 或 `noindex` 控制。
 - **提交后检查状态**：在 Google Search Console 提交 sitemap 后，要关注"已发现 URL 数"和"已索引 URL 数"，排查异常。
+
+## 5. TDK 优化 + HTML 语义化标签
+
+TDK 是 SEO 中最基础、也最容易出效果的部分。它指的是：
+
+| 元素 | 全称 | 作用 |
+| --- | --- | --- |
+| **T** | Title（标题） | 告诉搜索引擎和用户这个页面是关于什么的，是最重要的排名信号之一 |
+| **D** | Description（描述） | 搜索结果页中显示的摘要，影响点击率（CTR） |
+| **K** | Keywords（关键词） | 早期搜索引擎会参考，但 Google 已明确不再将其作为排名因素 |
+
+### Title 优化
+
+`<title>` 标签是页面最重要的元信息之一。优化时需要注意：
+
+- **唯一性**：每个页面的 title 都应该不同，不要全站共用同一个 title。
+- **长度**：控制在 50~60 个字符以内，超过可能被截断。
+- **关键词前置**：把核心关键词放在前面，品牌名放后面。
+- **避免堆砌**：不要重复堆叠关键词，要自然通顺。
+
+示例：
+
+```html
+<!-- 好的 title -->
+<title>Nuxt 4 SEO 实践指南 - xiaofu-xf</title>
+
+<!-- 不好的 title -->
+<title>SEO, Nuxt SEO, Nuxt 4 SEO, 搜索引擎优化</title>
+```
+
+### Description 优化
+
+`meta description` 不会直接影响排名，但会影响用户是否点击。优化要点：
+
+- **唯一性**：每个页面写不同的描述。
+- **长度**：控制在 150~160 个字符以内。
+- **包含关键词**：用户搜索词会高亮显示，提高相关性感知。
+- **行动号召**：适当引导用户点击，如"了解..."、"查看完整指南"。
+
+示例：
+
+```html
+<meta name="description" content="从 useHead 到 sitemap，一步步让 Nuxt 4 博客对搜索引擎更友好。涵盖 robots.txt、TDK、JSON-LD、Open Graph 和 Web Vitals。">
+```
+
+### Keywords 还写吗？
+
+Google 在 2009 年就宣布不再把 `meta keywords` 作为排名因素。目前主流搜索引擎中，只有极少数还会参考它。
+
+结论：**可以写，但优先级最低**；不要把精力花在这上面。
+
+### Nuxt 4 实战
+
+Nuxt 提供了 `useHead` 和 `useSeoMeta` 两个组合式函数来管理页面 `<head>` 元信息。
+
+#### 1. 全局 titleTemplate
+
+在 [app/app.vue](app/app.vue) 中设置全局 title 模板和默认元信息：
+
+```ts
+// app/app.vue
+const config = useRuntimeConfig()
+
+useHead({
+  htmlAttrs: {
+    lang: 'zh-CN',
+  },
+  titleTemplate: (titleChunk) =>
+    titleChunk && titleChunk !== config.public.siteName
+      ? `${titleChunk} - ${config.public.siteName}`
+      : config.public.siteName,
+  link: [
+    { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+  ],
+})
+```
+
+这样设置后：
+
+- 首页 title 显示为 `xiaofu-xf`
+- 其他页面如果设置了 title，会显示为 `页面标题 - xiaofu-xf`
+- `htmlAttrs.lang = 'zh-CN'` 帮助搜索引擎识别页面语言
+
+#### 2. 页面级 TDK
+
+在 [app/pages/index.vue](app/pages/index.vue) 中设置首页：
+
+```ts
+useHead({
+  title: '首页',
+})
+
+useSeoMeta({
+  title: config.public.siteName,
+  description: `${config.public.siteName} 的个人技术博客，记录前端学习与工程实践。`,
+  ogTitle: config.public.siteName,
+  ogDescription: `${config.public.siteName} 的个人技术博客，记录前端学习与工程实践。`,
+  ogType: 'website',
+})
+```
+
+在 [app/pages/blog/index.vue](app/pages/blog/index.vue) 中设置博客列表页：
+
+```ts
+useHead({
+  title: '博客',
+})
+
+useSeoMeta({
+  title: '博客文章列表',
+  description: '所有博客文章列表，涵盖 Nuxt、Vue、前端工程化和 SEO 等主题。',
+})
+```
+
+#### 3. 动态页面 TDK
+
+在 [app/pages/blog/[slug].vue](app/pages/blog/[slug].vue) 中，根据文章内容动态注入：
+
+```ts
+useHead({
+  title: article.value.title,
+})
+
+useSeoMeta({
+  title: article.value.title,
+  description: article.value.description,
+  ogTitle: article.value.title,
+  ogDescription: article.value.description,
+  ogImage: article.value.cover,
+  ogType: 'article',
+  twitterCard: 'summary_large_image',
+})
+```
+
+这样每篇文章都有不同的 title 和 description，对搜索引擎和社交媒体都更友好。
+
+### HTML 语义化标签
+
+语义化标签是指具有明确含义的 HTML 标签，比如 `<header>`、`<main>`、`<article>`，而不是无意义的 `<div>`、`<span>`。
+
+#### 为什么语义化重要
+
+- **帮助搜索引擎理解结构**：爬虫能更快识别标题、正文、导航、页脚等区域。
+- **提升可访问性**：屏幕阅读器依赖语义化标签为视障用户导航。
+- **有利于渲染优先级**：搜索引擎可以判断哪些内容是页面的核心。
+
+#### 常用语义化标签
+
+| 标签 | 用途 |
+| --- | --- |
+| `<header>` | 页面或区块的头部，通常包含 logo、导航 |
+| `<nav>` | 导航链接组 |
+| `<main>` | 页面主要内容，每个页面应只有一个 |
+| `<article>` | 独立的文章、博客帖子、新闻内容 |
+| `<section>` | 文档中的主题区块 |
+| `<aside>` | 侧边栏、附加信息 |
+| `<footer>` | 页面或区块的底部 |
+| `<h1>` ~ `<h6>` | 标题层级，<h1> 通常一个页面只有一个 |
+| `<time>` | 时间/日期，可带 `datetime` 属性 |
+| `<figure>` / `<figcaption>` | 图片及其说明 |
+
+#### Nuxt 项目中的应用
+
+以本项目为例：
+
+- [app/layouts/default.vue](app/layouts/default.vue) 用 `<main>` 包裹页面主体。
+- [app/components/AppHeader.vue](app/components/AppHeader.vue) 用 `<header>` 和 `<nav>`。
+- [app/components/ProseArticle.vue](app/components/ProseArticle.vue) 用 `<article>` 包裹文章正文。
+- 文章 Markdown 中的标题被自动渲染为 `<h1>`、`<h2>` 等层级标签。
+
+示例：
+
+```vue
+<template>
+  <article>
+    <header>
+      <h1>{{ article.title }}</h1>
+      <time :datetime="article.date">{{ formatDate(article.date) }}</time>
+    </header>
+
+    <div class="content">
+      <!-- 正文 -->
+    </div>
+  </article>
+</template>
+```
+
+### 注意事项
+
+- **不要滥用 <h1>**：一个页面通常只应有一个 `<h1>`，且包含核心关键词。
+- **标题层级不要跳跃**：不要从 `<h2>` 直接跳到 `<h4>`。
+- **title 和 h1 可以不同**：title 面向搜索结果，h1 面向页面读者，但内容要一致。
+- **description 不要直接复制正文**：应该是一段吸引点击的独立摘要。
+- **移动端也要关注**：语义化结构和 TDK 在移动端同样重要。
