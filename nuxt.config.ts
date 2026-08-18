@@ -80,5 +80,12 @@ export default defineNuxtConfig({
     experimental: {
       sqliteConnector: 'native',
     },
+    // 代码高亮：根据当前 color-mode 自动切换 Shiki 主题
+    highlight: {
+      theme: {
+        default: 'github-light',
+        dark: 'github-dark',
+      },
+    },
   },
 })

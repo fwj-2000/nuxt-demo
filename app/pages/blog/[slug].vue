@@ -1,6 +1,11 @@
 <script setup lang="ts">
-// 文章详情页：[slug].vue 会匹配 /blog/xxx 这样的 URL
+// 文章详情页使用专门的 article 布局，让左侧目录可以贴边
+// [slug].vue 会匹配 /blog/xxx 这样的 URL
 // 比如 /blog/nuxt-seo-guide，route.params.slug 就是 'nuxt-seo-guide'
+definePageMeta({
+  layout: 'article',
+})
+
 const route = useRoute()
 const slug = route.params.slug as string
 
@@ -36,7 +41,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div v-if="article">
+  <div v-if="article" class="article-page">
     <ProseArticle :article="article" />
   </div>
 </template>
