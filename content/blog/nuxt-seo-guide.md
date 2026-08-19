@@ -1096,3 +1096,151 @@ const jsonLd: WithContext<BlogPosting> = {
 - **必填字段要完整**：比如 `BlogPosting` 最好包含 `headline`、`author`、`datePublished`。
 - **避免多个冲突的 schema**：同一页面可以有一个主 schema 和若干辅助 schema（如 `BreadcrumbList`），但不要互相矛盾。
 - **JSON 要合法**：注意转义引号和特殊字符。
+
+## 7. Open Graph
+
+Open Graph（OG）协议由 Facebook（现 Meta）提出，用于让网页在社交分享时展示规范的标题、描述、图片、站点名称等信息。现在 Twitter/X、LinkedIn、微信、Discord 等主流平台都支持读取 OG 标签。
+
+### 为什么需要 Open Graph
+
+没有 OG 标签时，社交平台会自己“猜测”页面标题、配图和摘要，结果可能：
+
+- 标题抓成导航栏或站点名，而不是文章标题。
+- 图片抓成页脚图标或不相关的 Banner。
+- 描述抓成版权信息或菜单文字。
+
+添加 OG 标签后，你可以明确告诉平台应该展示什么内容，从而提升分享点击率。
+
+### 常用 OG 标签
+
+| 标签 | 说明 | 示例 |
+| --- | --- | --- |
+| `og:title` | 分享卡片的标题 | 文章标题或页面标题 |
+| `og:description` | 分享卡片的描述 | 页面描述，150 字以内 |
+| `og:image` | 分享卡片的配图 | 绝对路径，推荐 1200×630 |
+| `og:url` | 页面的规范 URL | `https://example.com/blog/xxx` |
+| `og:type` | 内容类型 | `website`、`article` |
+| `og:site_name` | 站点名称 | 博客名称 |
+| `og:locale` | 内容语言地区 | `zh_CN`、`en_US` |
+
+### Twitter/X Cards
+
+Twitter/X 早期有自己的一套 `twitter:*` 标签，例如：
+
+| 标签 | 说明 |
+| --- | --- |
+| `twitter:card` | 卡片类型：`summary`、`summary_large_image` |
+| `twitter:title` | 标题 |
+| `twitter:description` | 描述 |
+| `twitter:image` | 图片 |
+| `twitter:site` | 站点 Twitter 账号 |
+| `twitter:creator` | 作者 Twitter 账号 |
+
+如果页面只有 `og:title`、`og:description`、`og:image`，Twitter 也会把它们作为 fallback 读取。所以最小集合是：
+
+- `og:title`
+- `og:description`
+- `og:image`
+- `twitter:card`
+
+### Nuxt 4 实战
+
+在 Nuxt 4 中，`useSeoMeta` 会自动生成对应的 OG 和 Twitter 标签。我们在第 5 章的文章详情页和首页已经用过：
+
+```ts
+useSeoMeta({
+  title: article.value.title,
+  description: article.value.description,
+  ogTitle: article.value.title,
+  ogDescription: article.value.description,
+  ogImage: article.value.cover,
+  ogType: 'article',
+  twitterCard: 'summary_large_image',
+})
+```
+
+Nuxt 会把这些字段渲染成：
+
+```html
+<meta property="og:title" content="文章标题">
+<meta property="og:description" content="文章描述">
+<meta property="og:image" content="/cover.png">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary_large_image">
+```
+
+#### 1. 首页的 Open Graph
+
+参考 [app/pages/index.vue](app/pages/index.vue) 的写法，首页通常用 `og:type: 'website'`：
+
+```ts
+useSeoMeta({
+  title: config.public.siteName,
+  description: `${config.public.siteName} 的个人技术博客，记录前端学习与工程实践。`,
+  ogTitle: config.public.siteName,
+  ogDescription: `${config.public.siteName} 的个人技术博客，记录前端学习与工程实践。`,
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+})
+```
+
+#### 2. 文章详情页的 Open Graph
+
+参考 [app/pages/blog/[slug].vue](app/pages/blog/[slug].vue)，文章页用 `og:type: 'article'`，并补上 `article:published_time` 等更细粒度的字段：
+
+```ts
+useSeoMeta({
+  title: article.value.title,
+  description: article.value.description,
+  ogTitle: article.value.title,
+  ogDescription: article.value.description,
+  ogImage: article.value.cover,
+  ogType: 'article',
+  ogUrl: `${config.public.siteUrl}${article.value.path}`,
+  articleAuthor: [article.value.author || config.public.author],
+  articlePublishedTime: article.value.date,
+  twitterCard: 'summary_large_image',
+})
+```
+
+注意 `og:image` 最好用绝对路径。如果 `article.value.cover` 存的是相对路径（如 `/cover.png`），可以拼接成：
+
+```ts
+ogImage: article.value.cover
+  ? `${config.public.siteUrl}${article.value.cover}`
+  : undefined,
+```
+
+#### 3. 用 `useHead` 手动补充不支持的标签
+
+如果 `useSeoMeta` 没有覆盖某个 OG 标签，可以用 `useHead` 手动添加 `meta`：
+
+```ts
+useHead({
+  meta: [
+    { property: 'og:locale', content: 'zh_CN' },
+    { property: 'og:site_name', content: config.public.siteName },
+  ],
+})
+```
+
+### 验证工具
+
+- **[Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)**：抓取并预览 Facebook/Instagram 分享效果。
+- **[Twitter/X Card Validator](https://cards-dev.twitter.com/validator)**：检查 Twitter 卡片类型和字段。
+- **[LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/)**：检查 LinkedIn 分享效果。
+- 浏览器开发者工具：查看 `<head>` 中的 `meta property="og:*"` 标签。
+
+### 实践建议
+
+- **图片尺寸**：推荐 1200×630，文件大小控制在 8MB 以内。
+- **图片用绝对路径**：相对路径在某些平台可能无法正确解析。
+- **标题和描述长度**：标题建议 60 字以内，描述 150 字以内，避免被截断。
+- **类型要准确**：首页用 `website`，文章页用 `article`，不要混用。
+- **保持和 TDK 一致**：`og:title` 和 `og:description` 应该与 `title`、`description` 基本一致，避免用户和搜索引擎看到两套信息。
+
+### 注意事项
+
+- Open Graph 不会直接影响搜索引擎排名，但会影响社交分享点击率。
+- 修改 OG 标签后，社交平台有缓存，需要使用各平台的调试工具刷新缓存才能看到最新效果。
+- 如果站点面向多语言用户，建议设置 `og:locale` 和 `og:locale:alternate`。
