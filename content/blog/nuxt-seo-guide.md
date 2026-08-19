@@ -868,3 +868,231 @@ useSeoMeta({
 - **title 和 h1 可以不同**：title 面向搜索结果，h1 面向页面读者，但内容要一致。
 - **description 不要直接复制正文**：应该是一段吸引点击的独立摘要。
 - **移动端也要关注**：语义化结构和 TDK 在移动端同样重要。
+
+## 6. JSON-LD
+
+JSON-LD（JSON for Linked Data）是一种用 JSON 格式表达**结构化数据**的方式。它嵌入在网页的 `<head>` 中，帮助搜索引擎和 AI 更准确地理解页面内容——例如这是一篇文章、一个商品、一个组织还是一个人。
+
+### 为什么需要 JSON-LD
+
+没有结构化数据时，搜索引擎看到的内容大致是：
+
+```html
+<h1>Nuxt 4 SEO 实践指南</h1>
+<p>2026-08-18</p>
+<p>作者是 xiaofu-xf</p>
+```
+
+搜索引擎需要"猜测"这是一篇文章，以及标题、作者、发布时间分别是什么。
+
+有了 JSON-LD，你可以明确告诉搜索引擎：
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Nuxt 4 SEO 实践指南",
+  "datePublished": "2026-08-18",
+  "author": {
+    "@type": "Person",
+    "name": "xiaofu-xf"
+  }
+}
+```
+
+这能让搜索引擎更快、更准确地理解页面，并有机会在搜索结果中展示**富媒体摘要**（Rich Results），比如文章标题、作者、发布日期、评分、面包屑等。
+
+### 常见的 Schema 类型
+
+| 类型 | 用途 | 适用页面 |
+| --- | --- | --- |
+| `Article` / `BlogPosting` | 文章、博客帖子 | 文章详情页 |
+| `WebSite` | 网站整体信息 | 首页 |
+| `WebPage` | 单个页面信息 | 所有页面 |
+| `BreadcrumbList` | 面包屑导航 | 有层级结构的页面 |
+| `Organization` / `Person` | 组织或个人信息 | 关于页、首页 |
+| `FAQPage` | FAQ 页面 | 常见问题页 |
+| `Product` | 商品信息 | 电商商品页 |
+
+更多类型可以参考 [Schema.org 完整类型列表](https://schema.org/docs/full.html)。
+
+### JSON-LD 的基本结构
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "@id": "https://example.com/blog/nuxt-seo-guide",
+  "headline": "文章标题",
+  "description": "文章描述",
+  "image": "https://example.com/cover.png",
+  "datePublished": "2026-08-18",
+  "dateModified": "2026-08-19",
+  "author": {
+    "@type": "Person",
+    "name": "作者名"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "站点名",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://example.com/logo.png"
+    }
+  }
+}
+```
+
+字段说明：
+
+| 字段 | 说明 |
+| --- | --- |
+| `@context` | 通常固定为 `https://schema.org`，表示使用 Schema.org 词汇表 |
+| `@type` | 实体类型，如 `Article`、`Product`、`Organization` |
+| `@id` | 实体的唯一标识符，通常就是该实体的 URL |
+
+### Nuxt 4 实战
+
+在 Nuxt 4 中，可以通过 `useHead` 注入 JSON-LD。推荐把结构化数据作为 `<script type="application/ld+json">` 放到 `<head>` 中。
+
+#### 1. 安全序列化
+
+`JSON.stringify` 本身不会自动处理所有潜在注入风险。当 JSON-LD 中包含不可信字符串时，建议把 `<` 替换为 `<`，降低 XSS 风险：
+
+```ts
+const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c')
+```
+
+如果团队有统一的安全序列化方案，也可以采用社区库（如 `serialize-javascript`）或内部安全工具。
+
+#### 2. 在文章详情页注入 Article 结构化数据
+
+修改 [app/pages/blog/[slug].vue](app/pages/blog/[slug].vue)，把 JSON-LD 注入到 `useHead` 中：
+
+```ts
+const config = useRuntimeConfig()
+
+useHead({
+  title: article.value.title,
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        '@id': `${config.public.siteUrl}${article.value.path}`,
+        headline: article.value.title,
+        description: article.value.description,
+        image: article.value.cover
+          ? `${config.public.siteUrl}${article.value.cover}`
+          : undefined,
+        datePublished: article.value.date,
+        dateModified: article.value.date,
+        author: {
+          '@type': 'Person',
+          name: article.value.author || config.public.author,
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: config.public.siteName,
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': `${config.public.siteUrl}${article.value.path}`,
+        },
+      }).replace(/</g, '\\u003c'),
+    },
+  ],
+})
+
+useSeoMeta({
+  title: article.value.title,
+  description: article.value.description,
+  ogTitle: article.value.title,
+  ogDescription: article.value.description,
+  ogImage: article.value.cover,
+  ogType: 'article',
+  twitterCard: 'summary_large_image',
+})
+```
+
+#### 3. 在首页注入 WebSite 结构化数据
+
+修改 [app/pages/index.vue](app/pages/index.vue)，加入 `WebSite` schema：
+
+```ts
+useHead({
+  title: '首页',
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        '@id': config.public.siteUrl,
+        name: config.public.siteName,
+        url: config.public.siteUrl,
+      }).replace(/</g, '\\u003c'),
+    },
+  ],
+})
+```
+
+#### 4. TypeScript 类型约束（可选）
+
+> **来源说明**：Nuxt 核心和 `@nuxtjs/robots`、`@nuxtjs/sitemap` 等模块都没有为 JSON-LD 提供内置类型。如果你希望获得类型提示，可以使用社区维护的 [`schema-dts`](https://github.com/google/schema-dts)（基于 Schema.org 数据生成的 TypeScript 类型库）。这不是 Nuxt 或 Google 官方强制方案，只是可选辅助。如果你不想引入额外依赖，像本项目一样直接手写 `useHead` 也完全可行。
+
+安装：
+
+```bash
+pnpm add -D schema-dts
+```
+
+使用示例：
+
+```ts
+import type { BlogPosting, WithContext } from 'schema-dts'
+
+const jsonLd: WithContext<BlogPosting> = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: article.value.title,
+  description: article.value.description,
+  datePublished: article.value.date,
+  author: {
+    '@type': 'Person',
+    name: article.value.author || config.public.author,
+  },
+}
+```
+
+如果你希望由 Nuxt SEO 生态统一处理 robots、sitemap、JSON-LD、OG 等，可以了解官方 `@nuxtjs/seo` 模块（前身 `nuxt-seo-kit`），它提供 `defineWebSite`、`defineArticle` 等类型安全的组合式函数。本教程为了和前面章节保持“手写 + 官方独立模块”的风格，没有采用该模块。
+
+#### 5. 放在 layout 还是 page？
+
+- **layout**：适合站点级、栏目级的通用结构化数据，比如全局的 `Organization`。
+- **page**：适合强依赖当前页面数据的实体，比如文章详情页的 `BlogPosting`、商品详情页的 `Product`。
+
+本项目在 [app/pages/index.vue](app/pages/index.vue) 放 `WebSite`，在 [app/pages/blog/[slug].vue](app/pages/blog/[slug].vue) 放 `BlogPosting`，属于 page 级别注入。
+
+#### 6. 验证 JSON-LD
+
+写入后，可以通过以下方式验证：
+
+- **Google 富媒体搜索结果测试工具**（[Rich Results Test](https://search.google.com/test/rich-results)）：输入页面 URL 或粘贴代码。
+- **Schema Markup Validator**（[validator.schema.org](https://validator.schema.org/)）：通用 Schema.org 结构校验。
+- 浏览器开发者工具：查看页面 `<head>` 中是否有 `<script type="application/ld+json">`。
+
+### 实践建议
+
+- **使用与页面真实内容一致的字段**：不要"标注内容"和"页面内容"不一致。
+- **动态页面优先在服务端生成 JSON-LD**：保证首屏 HTML 可被爬虫读取。Nuxt 的 SSR 天然满足这一点。
+- **关键实体优先完善**：文章、商品、组织这些核心类型先做好，再逐步扩展 FAQ、面包屑等。
+- **图片 URL 用绝对路径**：相对路径可能导致搜索引擎无法识别。
+
+### 注意事项
+
+- **类型要准确**：不要用 `Article` 标注商品页，不要用 `Product` 标注博客文章。
+- **必填字段要完整**：比如 `BlogPosting` 最好包含 `headline`、`author`、`datePublished`。
+- **避免多个冲突的 schema**：同一页面可以有一个主 schema 和若干辅助 schema（如 `BreadcrumbList`），但不要互相矛盾。
+- **JSON 要合法**：注意转义引号和特殊字符。

@@ -23,10 +23,41 @@ if (!article.value) {
   })
 }
 
+const config = useRuntimeConfig()
+
 // 用文章的 title/description/cover 动态注入 SEO 元信息
 // 这样每篇文章的 title 和 OG 标签都不一样，对搜索引擎友好
 useHead({
   title: article.value.title,
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        '@id': `${config.public.siteUrl}${article.value.path}`,
+        headline: article.value.title,
+        description: article.value.description,
+        image: article.value.cover
+          ? `${config.public.siteUrl}${article.value.cover}`
+          : undefined,
+        datePublished: article.value.date,
+        dateModified: article.value.date,
+        author: {
+          '@type': 'Person',
+          name: article.value.author || config.public.author,
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: config.public.siteName,
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': `${config.public.siteUrl}${article.value.path}`,
+        },
+      }).replace(/</g, '\\u003c'),
+    },
+  ],
 })
 
 useSeoMeta({

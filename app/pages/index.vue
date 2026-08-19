@@ -4,6 +4,18 @@ const { data: posts } = await useBlogPosts()
 
 useHead({
   title: '首页',
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        '@id': config.public.siteUrl,
+        name: config.public.siteName,
+        url: config.public.siteUrl,
+      }).replace(/</g, '\\u003c'),
+    },
+  ],
 })
 
 useSeoMeta({
