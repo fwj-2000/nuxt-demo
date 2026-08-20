@@ -1437,3 +1437,135 @@ Nuxt 会自动加载 `.client.ts` 结尾的插件，并且只在浏览器端执�
 - Web Vitals 是**必要条件**而非**充分条件**。性能好不能保证排名高，但性能差会拖累排名。
 - 不要只盯着数字优化，最终目标是真实用户体验。
 - 移动端指标通常比桌面端差，移动优先优化更有价值。
+
+## 9. SEO 工具的使用
+
+SEO 不是一次性工作，需要持续监控、分析和迭代。合理使用工具可以让你更快发现问题、验证优化效果。
+
+### 搜索引擎官方工具
+
+#### Google Search Console（GSC）
+
+[Google Search Console](https://search.google.com/search-console) 是 Google 官方提供的免费工具，也是 SEO 工作最重要的入口。
+
+核心功能：
+
+- **效果报告**：查看哪些关键词带来了展示和点击，以及平均排名。
+- **索引覆盖**：查看已索引页面、未索引页面、抓取错误。
+- **站点地图**：提交 [sitemap.xml](https://xiaofu-blog.vercel.app/sitemap.xml)。
+- **移动设备易用性**：检查移动端体验问题。
+- **Core Web Vitals**：查看真实用户的 LCP、INP、CLS 数据。
+- **链接报告**：查看内链和外链情况。
+
+#### Bing Webmaster Tools
+
+[Bing Webmaster Tools](https://www.bing.com/webmasters) 是 Bing 的官方工具，功能和 GSC 类似。如果你的站点需要覆盖必应搜索流量，建议注册并提交 sitemap。
+
+#### Google Analytics 4（GA4）
+
+[Google Analytics 4](https://analytics.google.com/) 主要用于分析用户行为，虽然它不直接给出排名数据，但可以帮助你判断 SEO 流量的质量：
+
+- 自然搜索流量占比
+- 用户停留时长、跳出率
+- 热门着陆页
+- 转化路径
+
+### 页面级分析工具
+
+| 工具 | 用途 |
+| --- | --- |
+| **[PageSpeed Insights](https://pagespeed.web.dev/)** | 在线分析 Web Vitals，同时提供实验室数据和 CrUX 真实用户数据。 |
+| **Lighthouse** | Chrome 内置审计工具，评估性能、可访问性、最佳实践、SEO。 |
+| **[GTmetrix](https://gtmetrix.com/)** | 在线测速，提供瀑布图和优化建议。 |
+| **[WebPageTest](https://www.webpagetest.org/)** | 多地点、多设备、多网络条件下的详细性能测试。 |
+
+### 技术 SEO 检查工具
+
+| 工具 | 用途 |
+| --- | --- |
+| **[Screaming Frog](https://www.screamingfrog.co.uk/seo-spider/)** | 桌面端爬虫工具，批量检查标题、描述、状态码、内链、重定向等。免费版可爬 500 个 URL。 |
+| **[Ahrefs](https://ahrefs.com/)** | 外链分析、关键词研究、竞争对手分析。 |
+| **[SEMrush](https://www.semrush.com/)** | 综合 SEO 工具，覆盖关键词、外链、站点审计、排名追踪。 |
+| **[Sitebulb](https://sitebulb.com/)** | 可视化站点审计工具，适合发现结构性 SEO 问题。 |
+
+### 结构化数据验证工具
+
+| 工具 | 用途 |
+| --- | --- |
+| **[Rich Results Test](https://search.google.com/test/rich-results)** | Google 官方工具，验证 JSON-LD 是否能生成富媒体搜索结果。 |
+| **[Schema Markup Validator](https://validator.schema.org/)** | Schema.org 通用校验工具，检查 JSON-LD 语法和结构。 |
+
+### Nuxt 4 实战：把工具和项目串联起来
+
+#### 1. 在 GSC 提交 sitemap
+
+项目已经通过 `@nuxtjs/sitemap` 自动生成 [sitemap.xml](https://xiaofu-blog.vercel.app/sitemap.xml)。部署后，进入 Google Search Console → 索引 → 站点地图，提交：
+
+```
+https://xiaofu-blog.vercel.app/sitemap.xml
+```
+
+#### 2. 验证站点所有权
+
+GSC 支持多种验证方式，最简单的是：
+
+- **HTML 文件验证**：把 GSC 提供的验证文件放到 [public/](public/) 目录，部署后访问验证。
+- **DNS 验证**：在域名服务商添加 TXT 记录。
+- **Google Analytics 验证**：如果站点已接入 GA4，可以直接验证。
+
+#### 3. 检查 robots.txt
+
+项目通过 `@nuxtjs/robots` 自动生成 [robots.txt](https://xiaofu-blog.vercel.app/robots.txt)。可以在 GSC 中测试 robots.txt 是否允许 Googlebot 访问关键页面。
+
+#### 4. 接入网站分析
+
+如果后续需要分析用户行为，可以在 Nuxt 中接入 GA4 或 Microsoft Clarity。以 GA4 为例，通常有两种方式：
+
+- **通过 `gtag.js` 脚本**：在 [app.vue](app.vue) 或布局中用 `useHead` 注入 GA4 脚本。
+- **通过 `@nuxtjs/google-analytics` 等模块**：社区模块，配置更集中。
+
+示例：在 [app.vue](app.vue) 中手动注入 GA4：
+
+```vue
+<script setup>
+const config = useRuntimeConfig()
+
+useHead({
+  script: [
+    {
+      src: `https://www.googletagmanager.com/gtag/js?id=${config.public.gaId}`,
+      async: true,
+    },
+    {
+      innerHTML: `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${config.public.gaId}');
+      `,
+    },
+  ],
+})
+</script>
+```
+
+> 注意：这里为了演示直接写了内联脚本。生产环境中建议进一步做 CSP 和脚本完整性处理。
+
+#### 5. 定期跑 Lighthouse 和 PageSpeed Insights
+
+每次发布新功能或新增第三方脚本后，重新检查首页和文章详情页的 Web Vitals 分数，确保没有明显退化。
+
+### 实践建议
+
+- **先用 GSC 做基础监控**：它免费、权威，是 SEO 日常工作的核心看板。
+- **把 sitemap 提交到 GSC 和 Bing**：让搜索引擎主动发现新页面。
+- **关注 GSC 中的“体验”报告**：它会汇总 Core Web Vitals 和移动易用性问题。
+- **用 Screaming Frog 做周期性体检**：每月或每次大版本发布跑一次，检查死链、重复标题、缺失描述等。
+- **结合 GA4 看流量质量**：SEO 流量是否停留、转化，比单纯排名更有价值。
+
+### 注意事项
+
+- SEO 工具的数据有延迟，GSC 通常滞后 1-3 天。
+- 工具报告的问题要区分优先级：索引问题 > 结构性问题 > 单个页面的元信息优化。
+- 不要盲目追求工具分数，最终目标是真实用户和搜索流量的增长。
+- 第三方分析脚本会影响 Web Vitals，尽量延迟加载或按需加载。
