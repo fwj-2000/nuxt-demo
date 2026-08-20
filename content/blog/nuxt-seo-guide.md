@@ -1244,3 +1244,196 @@ useHead({
 - Open Graph 不会直接影响搜索引擎排名，但会影响社交分享点击率。
 - 修改 OG 标签后，社交平台有缓存，需要使用各平台的调试工具刷新缓存才能看到最新效果。
 - 如果站点面向多语言用户，建议设置 `og:locale` 和 `og:locale:alternate`。
+
+## 8. Web Vitals
+
+Web Vitals 是 Google 推出的一套**以用户为中心**的网页性能指标体系，用来衡量真实用户在**加载速度、交互响应、页面稳定性**三个维度的体验表现，也是 SEO 评估的重要参考项。
+
+### 为什么 Web Vitals 影响 SEO
+
+Google 已经把页面体验（Page Experience）作为排名因素之一，而 Core Web Vitals 是页面体验的重要组成部分。加载慢、交互卡顿、布局跳动的页面，排名和用户留存都会受影响。
+
+### Core Web Vitals 三大指标
+
+截至 2026 年，Core Web Vitals 仍由以下三项组成：
+
+| 指标 | 全称 | 衡量内容 | Good | Needs Improvement | Poor |
+| --- | --- | --- | --- | --- | --- |
+| **LCP** | Largest Contentful Paint | 最大内容绘制时间，反映主要内容何时可见 | ≤ 2.5s | 2.5s ~ 4.0s | > 4.0s |
+| **INP** | Interaction to Next Paint | 交互到下一次绘制的时间，反映整体交互流畅度 | ≤ 200ms | 200ms ~ 500ms | > 500ms |
+| **CLS** | Cumulative Layout Shift | 累积布局偏移，反映视觉稳定性 | ≤ 0.1 | 0.1 ~ 0.25 | > 0.25 |
+
+> 注：INP 在 2024 年 3 月正式取代了之前的 FID（First Input Delay），成为 Core Web Vitals 之一。
+
+### 其他常用性能指标
+
+| 指标 | 全称 | 说明 |
+| --- | --- | --- |
+| **TTFB** | Time to First Byte | 首字节时间，反映服务器响应速度 |
+| **FCP** | First Contentful Paint | 首个内容绘制时间 |
+| **TBT** | Total Blocking Time | 总阻塞时间，与 JS 执行占用主线程有关 |
+
+### Nuxt 4 实战优化
+
+Nuxt 4 本身在 SSR、代码分割、资源优化上已经做了很多工作，但仍需要结合业务场景做针对性优化。
+
+#### 1. 图片优化
+
+图片通常是 LCP 的主要影响因素。本项目已经配置了 `@nuxt/image`：
+
+```ts
+// nuxt.config.ts
+image: {
+  quality: 80,
+  format: ['webp'],
+}
+```
+
+使用 `<NuxtImg>` 替代原生 `<img>`，可以自动获得：
+
+- 懒加载（`loading="lazy"`）
+- 响应式尺寸
+- WebP 等现代格式
+- 图片尺寸压缩
+
+示例：
+
+```vue
+<NuxtImg
+  src="/cover.png"
+  alt="文章封面"
+  width="1200"
+  height="630"
+  format="webp"
+  quality="80"
+  loading="eager"
+  placeholder
+/>
+```
+
+对于首屏关键图片，设置 `loading="eager"` 让它优先加载，避免拖慢 LCP。
+
+#### 2. 字体优化
+
+如果项目使用了自定义字体，建议：
+
+- 只加载需要的字重（weight）和字符集（subset）。
+- 使用 `font-display: swap`，避免字体加载期间文字不可见。
+- 考虑使用系统字体栈作为 fallback。
+
+示例 CSS：
+
+```css
+@font-face {
+  font-family: 'CustomFont';
+  src: url('/fonts/custom.woff2') format('woff2');
+  font-display: swap;
+}
+```
+
+#### 3. 代码分割与懒加载
+
+Nuxt 4 默认会对页面和组件做自动代码分割。对于首屏不需要的组件，可以显式懒加载：
+
+```vue
+<script setup>
+const HeavyChart = defineAsyncComponent(() => import('~/components/HeavyChart.vue'))
+</script>
+
+<template>
+  <HeavyChart />
+</template>
+```
+
+#### 4. 静态预渲染
+
+对于博客这类内容不常变的站点，启用预渲染可以让页面以静态 HTML 输出，显著降低 TTFB：
+
+```ts
+// nuxt.config.ts
+nitro: {
+  prerender: {
+    routes: ['/sitemap.xml', '/robots.txt'],
+    crawlLinks: true,
+  },
+}
+```
+
+> 本项目通过 `@nuxtjs/sitemap` 和 `@nuxtjs/robots` 自动生成 sitemap 和 robots，已经在模块内部处理预渲染，不需要额外配置。
+
+#### 5. 减少第三方脚本
+
+广告、统计、聊天插件等第三方脚本会显著影响 INP 和 TBT。建议：
+
+- 延迟加载非关键脚本（`defer` 或 `async`）。
+- 使用 `partytown` 等方案把第三方脚本放到 Web Worker 中运行。
+- 只在需要时加载第三方脚本，避免全站全局注入。
+
+#### 6. 在客户端采集真实用户指标
+
+除了实验室工具，真实用户数据（RUM, Real User Monitoring）更能反映生产环境表现。可以安装 `web-vitals` 库，在 Nuxt 客户端订阅指标并上报到日志或分析平台：
+
+```bash
+pnpm add web-vitals
+```
+
+新建一个客户端插件 [app/plugins/web-vitals.client.ts](app/plugins/web-vitals.client.ts)：
+
+```ts
+import { onCLS, onFCP, onINP, onLCP, type Metric } from 'web-vitals'
+
+function reportWebVital(metric: Metric) {
+  // 生产环境中建议替换为埋点上报逻辑
+  // 例如：await $fetch('/api/analytics/web-vitals', { method: 'POST', body: metric })
+  console.log('[WebVitals]', metric.name, metric.value, metric.rating)
+}
+
+export default defineNuxtPlugin(() => {
+  onCLS(reportWebVital)
+  onFCP(reportWebVital)
+  onINP(reportWebVital)
+  onLCP(reportWebVital)
+})
+```
+
+Nuxt 会自动加载 `.client.ts` 结尾的插件，并且只在浏览器端执行。示例输出：
+
+```js
+{ name: 'FCP', value: 1164, rating: 'good', delta: 1164, entries: [...] }
+{ name: 'INP', value: 78, rating: 'good', delta: 78, entries: [...] }
+{ name: 'CLS', value: 0, rating: 'good', delta: 0, entries: [...] }
+{ name: 'LCP', value: 1530, rating: 'good', delta: 1530, entries: [...] }
+```
+
+> 注意：`web-vitals` 是客户端库，不能在服务端运行，因此插件必须以 `.client.ts` 结尾，或在 `defineNuxtPlugin` 中判断 `process.client`。
+
+### 测量工具
+
+| 工具 | 用途 |
+| --- | --- |
+| **[PageSpeed Insights](https://pagespeed.web.dev/)** | Google 官方在线测速工具，同时提供实验室数据和真实用户数据（CrUX）。 |
+| **Lighthouse** | Chrome 开发者工具内置，用于本地审计性能、可访问性、SEO 等。 |
+| **Chrome DevTools Performance** | 录制页面加载过程，分析长任务、渲染阻塞、布局偏移等细节。 |
+| **Web Vitals Chrome 扩展** | 实时显示当前页面的 LCP、INP、CLS 等指标。 |
+| **CrUX（Chrome User Experience Report）** | Google 收集的真实用户性能数据，PageSpeed Insights 中会展示。 |
+
+#### 用 Lighthouse 本地测评
+
+1. 打开 Chrome 开发者工具，切换到 **Lighthouse** 面板。
+2. 选择设备（建议优先看 **Mobile**）和检测类别（勾选 **Performance** 和 **SEO**）。
+3. 点击“分析网页加载情况”生成报告。
+4. 在报告中查看 LCP、INP、CLS 等核心指标分数与诊断建议。
+
+### 实践建议
+
+- **优先优化 LCP**：首屏最大元素通常是图片或视频，压缩和预加载它们收益最大。
+- **关注真实用户数据**：实验室数据（Lighthouse）只能模拟单一环境，CrUX 反映真实用户分布。
+- **避免布局偏移**：给图片和视频预设 `width`/`height`，不要动态插入导致页面跳动。
+- **减少长任务**：把大段 JS 拆成小块，避免阻塞主线程影响 INP。
+- **定期回归**：每次大版本发布或新增第三方脚本后，重新跑一遍 PageSpeed Insights。
+
+### 注意事项
+
+- Web Vitals 是**必要条件**而非**充分条件**。性能好不能保证排名高，但性能差会拖累排名。
+- 不要只盯着数字优化，最终目标是真实用户体验。
+- 移动端指标通常比桌面端差，移动优先优化更有价值。
