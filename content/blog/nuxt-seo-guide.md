@@ -1509,7 +1509,7 @@ https://xiaofu-blog.vercel.app/sitemap.xml
 
 GSC 支持多种验证方式，最简单的是：
 
-- **HTML 文件验证**：把 GSC 提供的验证文件放到 [public/](public/) 目录，部署后访问验证。
+- **HTML 文件验证**：把 GSC 提供的验证文件放到 `public/` 目录，部署后访问验证。
 - **DNS 验证**：在域名服务商添加 TXT 记录。
 - **Google Analytics 验证**：如果站点已接入 GA4，可以直接验证。
 
